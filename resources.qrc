@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/python_module_manager" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
