@@ -10,7 +10,7 @@ version=0.1
 author=BABA Yoshihiko
 email=babayoshihiko@mac.com
 
-about=Provide a brief description of the plugin and its purpose.
+about=Manages Python modules.
 
 tracker=https://github.com/babayoshihiko/python_module_manager/issues
 repository=https://github.com/babayoshihiko/python_module_manager

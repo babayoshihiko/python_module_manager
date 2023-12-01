@@ -46,10 +46,10 @@
            <item>
             <widget class="QPushButton" name="myPushButton1">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="text">
-              <string>Upgrade All</string>
+              <string>Search Path</string>
              </property>
             </widget>
            </item>

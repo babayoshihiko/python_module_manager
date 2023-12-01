@@ -190,7 +190,7 @@ class PythonModuleManager:
             self.dlg = PythonModuleManagerDialog()
             self.set_label_init()
             self.show_installed_modules()
-            self.dlg.myPushButton1.clicked.connect(self.upgrade_all_modules)
+            self.dlg.myPushButton1.clicked.connect(self.get_module_path)
             self.dlg.myPushButton2.clicked.connect(self.show_installed_modules)
             self.dlg.myPushButton3.clicked.connect(self.install_module)
 
@@ -207,6 +207,7 @@ class PythonModuleManager:
     def show_installed_modules(self):
         import pkg_resources
         installed_packages = [pkg.key for pkg in pkg_resources.working_set]
+        installed_packages.sort()
         self.dlg.myListWidget.clear()
         for package in installed_packages:
             self.dlg.myListWidget.addItem(package + " " + pkg_resources.get_distribution(package).version)
@@ -236,7 +237,6 @@ class PythonModuleManager:
             except Exception as e:
                 self.print_log(f"Failed to install {module_name}. Error: {e}")
 
-
     def upgrade_all_modules(self):
         import pip
         import pkg_resources
@@ -259,6 +259,28 @@ class PythonModuleManager:
 
         except Exception as e:
             self.print_log(f"Error updating modules: {e}")
+
+    def get_module_path(self):
+        import importlib.util
+        import os
+        
+        module = self.dlg.myListWidget.currentItem().text()
+        module_name = module.split(" ")[0]
+        
+        try:
+            # Find the module specification
+            spec = importlib.util.find_spec(module_name)
+            
+            if spec is not None:
+                # Get the file path of the module
+                module_path = os.path.abspath(spec.origin)
+                self.print_log(f"Module '{module_name}' is at {module_path}.")
+            else:
+                self.print_log(f"Module '{module_name}' not found.")
+                return None
+        except ImportError as e:
+            self.print_log(f"Error: {e}")
+            return None
 
 
 
