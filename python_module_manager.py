@@ -189,10 +189,11 @@ class PythonModuleManager:
             self.first_start = False
             self.dlg = PythonModuleManagerDialog()
             self.set_label_init()
-            self.show_installed_modules()
-            self.dlg.myPushButton1.clicked.connect(self.get_module_path)
-            self.dlg.myPushButton2.clicked.connect(self.show_installed_modules)
+            self.show_installed_packages()
+            self.dlg.myPushButton1.clicked.connect(self.show_all_modules_2)
+            self.dlg.myPushButton2.clicked.connect(self.show_installed_packages)
             self.dlg.myPushButton3.clicked.connect(self.install_module)
+            self.dlg.myPushButton4.clicked.connect(self.show_package_path_2)
 
         # show the dialog
         self.dlg.show()
@@ -204,7 +205,7 @@ class PythonModuleManager:
             # substitute with your code.
             pass
 
-    def show_installed_modules(self):
+    def show_installed_packages(self):
         import pkg_resources
         installed_packages = [pkg.key for pkg in pkg_resources.working_set]
         installed_packages.sort()
@@ -212,13 +213,31 @@ class PythonModuleManager:
         for package in installed_packages:
             self.dlg.myListWidget.addItem(package + " " + pkg_resources.get_distribution(package).version)
 
+    def show_installed_packages_old(self):
+        from pip._internal.utils.misc import get_installed_distributions
+        installed_distributions = get_installed_distributions()
+        installed_packages = []
+        for dist in installed_distributions:
+            package = {
+                'name': dist.key,
+                'version': dist.version,
+                'location': dist.location
+            }
+            installed_packages.append(package)
+        installed_packages.sort(key=lambda x: x['name'])
+        self.dlg.myListWidget.clear()
+        for package in installed_packages:
+            self.dlg.myListWidget.addItem(package['name'] + ' ' + package['version'] + ' ' + package['location'])
+
     def set_label_init(self):
         import sys
-        self.dlg.myTextEditLog.setText("<html><b>Python version</b></html>")
-        self.dlg.myTextEditLog.append(sys.version)
-        self.dlg.myTextEditLog.append(sys.executable)
-        self.dlg.myTextEditLog.append("<html><b>Path</b></html>")
+        self.print_log("<html><b>Python version</b></html>")
+        self.print_log(sys.version)
+        self.print_log("<html><b>sys.executable</b>:</html>")
+        self.print_log(sys.executable)
+        self.print_log("<html><b>sys.path</b>:</html>")
         paths = sys.path
+        possible_python = ""
         for path in paths:
             self.dlg.myTextEditLog.append(path)
 
@@ -233,7 +252,7 @@ class PythonModuleManager:
             try:
                 pip.main(["install", module_name])
                 self.print_log(f"Successfully installed {module_name}")
-                self.show_installed_modules()
+                self.show_installed_packages()
             except Exception as e:
                 self.print_log(f"Failed to install {module_name}. Error: {e}")
 
@@ -260,34 +279,57 @@ class PythonModuleManager:
         except Exception as e:
             self.print_log(f"Error updating modules: {e}")
 
-    def get_module_path(self):
+    def show_package_path(self):
         import importlib.util
         import os
         
-        module = self.dlg.myListWidget.currentItem().text()
-        module_name = module.split(" ")[0]
+        package = self.dlg.myListWidget.currentItem().text()
+        package_name = package.split(" ")[0]
         
         try:
             # Find the module specification
-            spec = importlib.util.find_spec(module_name)
+            spec = importlib.util.find_spec(package_name)
             
             if spec is not None:
                 # Get the file path of the module
-                module_path = os.path.abspath(spec.origin)
-                self.print_log(f"Module '{module_name}' is at {module_path}.")
+                package_path = os.path.abspath(spec.origin)
+                self.print_log(f"Pacakge '{package_name}' is at {package_path}.")
             else:
-                self.print_log(f"Module '{module_name}' not found.")
+                self.print_log(f"Package '{package_name}' not found.")
                 return None
         except ImportError as e:
             self.print_log(f"Error: {e}")
             return None
 
+    def show_package_path_2(self):
+        import pkg_resources
+        package = self.dlg.myListWidget.currentItem().text()
+        package_name = package.split(" ")[0]
+        self.print_log(pkg_resources.get_distribution(package_name).location)
+        
+    def show_all_modules(self):
+        import importlib
+        import pkgutil
+        
+        package = self.dlg.myListWidget.currentItem().text()
+        package_name = package.split(" ")[0]
+        
+        
+        package = importlib.import_module(package_name)
+        
+        module_iterator = pkgutil.iter_modules(package.__path__)
+        
+        for _, module_name, _ in module_iterator:
+            full_module_name = f"{package_name}.{module_name}"
+            self.print_log(full_module_name)
 
-
-
-
-
-
-
-
-
+    def show_all_modules_2(self):
+        import pkg_resources
+        package = self.dlg.myListWidget.currentItem().text()
+        package_name = package.split(" ")[0]
+        distribution = pkg_resources.get_distribution(package_name)
+        
+        for entry_point in distribution.get_entry_map().values():
+            for entry_point in entry_point.values():
+                if entry_point.module_name:
+                    self.print_log(entry_point.module_name)
