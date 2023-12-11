@@ -6,7 +6,7 @@
 name=Python Module Manager
 qgisMinimumVersion=3.0
 description=Manage Python modules
-version=0.1.3
+version=0.1.4
 author=BABA Yoshihiko
 email=babayoshihiko@mac.com
 

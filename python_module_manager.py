@@ -189,11 +189,28 @@ class PythonModuleManager:
             self.first_start = False
             self.dlg = PythonModuleManagerDialog()
             self.set_label_init()
-            self.show_installed_packages()
-            self.dlg.myPushButton1.clicked.connect(self.show_all_modules_2)
-            self.dlg.myPushButton2.clicked.connect(self.show_installed_packages)
-            self.dlg.myPushButton3.clicked.connect(self.install_module)
-            self.dlg.myPushButton4.clicked.connect(self.show_package_path_2)
+            #self.show_installed_packages_pkgresources()
+            self.show_all_distributions_importlib
+            
+            self.dlg.myPushButton1.setText("Install Package")
+            self.dlg.myPushButton1.setToolTip("Install packages in the text box above. You may have two or more packages in each line.")
+            self.dlg.myPushButton1.clicked.connect(self.install_package)
+            
+            self.dlg.myPushButton2.setText("Show Modules")
+            self.dlg.myPushButton2.setToolTip("Show all the modules in the selected package in the text box above.")
+            self.dlg.myPushButton2.clicked.connect(self.show_all_modules_importlib)
+            
+            self.dlg.myPushButton3.setText("Upgrade")
+            self.dlg.myPushButton3.setToolTip("Upgrade the selected package. This requires the Internet access.")
+            self.dlg.myPushButton3.clicked.connect(self.upgrade_package)
+            
+            self.dlg.myPushButton4.setText("Check Latest")
+            self.dlg.myPushButton4.setToolTip("Check the latest version of the selected package. This requires the Internet access. The result will be shown in the text box above.")
+            self.dlg.myPushButton4.clicked.connect(self.check_latest_version)
+            
+            self.dlg.myPushButton5.setText("Refresh")
+            self.dlg.myPushButton5.setToolTip("Refresh the list of installed paackages.")
+            self.dlg.myPushButton5.clicked.connect(self.show_all_distributions_importlib)
 
         # show the dialog
         self.dlg.show()
@@ -205,7 +222,9 @@ class PythonModuleManager:
             # substitute with your code.
             pass
 
-    def show_installed_packages(self):
+    # https://discuss.python.org/t/will-setuptools-remove-pkg-resource-module-in-the-future/27182
+    # https://github.com/matrix-org/synapse/issues/12508
+    def show_installed_packages_pkgresources(self):
         import pkg_resources
         installed_packages = [pkg.key for pkg in pkg_resources.working_set]
         installed_packages.sort()
@@ -244,40 +263,27 @@ class PythonModuleManager:
     def print_log(self, message):
         self.dlg.myTextEditLog.append(message)
 
-    def install_module(self):
+    def install_package(self):
         import pip
-        module_names = self.dlg.myTextEdit.toPlainText().split("\n")
+        package_names = self.dlg.myTextEdit.toPlainText().split()
 
-        for module_name in module_names:
+        for package_name in package_names:
             try:
                 pip.main(["install", module_name])
-                self.print_log(f"Successfully installed {module_name}")
+                self.print_log(f"Successfully installed {package_name}")
                 self.show_installed_packages()
             except Exception as e:
-                self.print_log(f"Failed to install {module_name}. Error: {e}")
+                self.print_log(f"Failed to install {package_name}. Error: {e}")
 
-    def upgrade_all_modules(self):
+    def upgrade_package(self):
         import pip
-        import pkg_resources
-
+        package = self.dlg.myListWidget.currentItem().text()
+        package_name = package.split(" ")[0]
         try:
-            # Upgrade pip itself first
-            pip.main(['install', '--upgrade', 'pip'])
-
-            # Upgrade all installed packages
-            installed_packages = [pkg.key for pkg in pkg_resources.working_set]
-        
-            for package in installed_packages:
-                try:
-                    pip.main(['install', '--upgrade', package])
-                    self.print_log(f"Updated {package}.")
-                except Exception as e:
-                    self.print_log(f"Error updating modules: {e}")
-                    break
-            self.print_log("All modules updated successfully.")
-
+            pip.main(['install', '--upgrade', package_name])
+            self.print_log(f"Updated {package}.")
         except Exception as e:
-            self.print_log(f"Error updating modules: {e}")
+            self.print_log(f"Error updating module: {e}")
 
     def show_package_path(self):
         import importlib.util
@@ -333,3 +339,45 @@ class PythonModuleManager:
             for entry_point in entry_point.values():
                 if entry_point.module_name:
                     self.print_log(entry_point.module_name)
+    
+    def show_all_distributions_importlib(self):
+        from importlib.metadata import distributions
+        distributions = distributions()
+        installed_packages = []
+        for distribution in distributions:            
+            package = {
+                'name': distribution.metadata['Name'],
+                'version': distribution.metadata['Version'],
+            }
+            installed_packages.append(package)
+        installed_packages.sort(key=lambda x: x['name'])
+        for package in installed_packages:
+            self.dlg.myListWidget.addItem(package['name'] + ' ' + package['version'])
+
+    
+    def show_all_modules_importlib(self):
+        from importlib.metadata import files
+        
+        package = self.dlg.myListWidget.currentItem().text()
+        package_name = package.split(" ")[0]
+                
+        modules = files(package_name)
+        for module in modules:
+            if str(module)[-3:] == ".py":
+                self.print_log(str(module.locate()))
+        # files("gdal")[0].locate()
+
+    def check_latest_version(self):
+        import requests
+        package = self.dlg.myListWidget.currentItem().text()
+        package_name = package.split(" ")[0]
+        installed_version = package.split(" ")[1]
+        
+        try:
+            response = requests.get(f'https://pypi.org/pypi/{package_name}/json')
+            data = response.json()
+            latest_version = data['info']['version']
+            self.print_log(f"The latest version of {package_name} is {latest_version}")
+        except Exception as e:
+            self.print_log(f"Error fetching latest version for {package_name}: {e}")
+

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>826</width>
-    <height>647</height>
+    <width>880</width>
+    <height>833</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,7 +26,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -39,21 +39,21 @@
                <item>
                 <widget class="QPushButton" name="myPushButton2">
                  <property name="text">
-                  <string>Refresh</string>
+                  <string>myPushuButton2</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="myPushButton1">
+                <widget class="QPushButton" name="myPushButton3">
                  <property name="text">
-                  <string>Show Modules</string>
+                  <string>myPushuButton3</string>
                  </property>
                 </widget>
                </item>
                <item>
                 <widget class="QPushButton" name="myPushButton4">
                  <property name="text">
-                  <string>Location</string>
+                  <string>myPushuButton4</string>
                  </property>
                 </widget>
                </item>
@@ -68,6 +68,17 @@
              </item>
              <item>
               <widget class="QListWidget" name="myListWidget"/>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <item>
+                <widget class="QPushButton" name="myPushButton5">
+                 <property name="text">
+                  <string>myPushButton5</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
             </layout>
            </item>
@@ -84,9 +95,9 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="myPushButton3">
+              <widget class="QPushButton" name="myPushButton1">
                <property name="text">
-                <string>Install Package</string>
+                <string>myPushuButton1</string>
                </property>
               </widget>
              </item>
