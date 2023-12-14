@@ -5,12 +5,12 @@
 [general]
 name=Python Module Manager
 qgisMinimumVersion=3.0
-description=Manage Python modules
+description=Show all the installed packages (distributions); Show modules in a selected package; Install a package/packages; Load a module and get the version.
 version=0.1.4
 author=BABA Yoshihiko
 email=babayoshihiko@mac.com
 
-about=Manages Python modules.
+about=Show the installed packages, versions and modules
 
 tracker=https://github.com/babayoshihiko/python_module_manager/issues
 repository=https://github.com/babayoshihiko/python_module_manager

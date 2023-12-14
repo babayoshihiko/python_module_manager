@@ -85,6 +85,13 @@
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_5">
              <item>
+              <widget class="QLabel" name="myLabel2">
+               <property name="text">
+                <string>Install Package</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QTextEdit" name="myTextEdit">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
@@ -98,6 +105,36 @@
               <widget class="QPushButton" name="myPushButton1">
                <property name="text">
                 <string>myPushuButton1</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="myLabel3">
+               <property name="text">
+                <string>Test Module</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="myLineEdit2"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="myPushButton6">
+               <property name="text">
+                <string>myPushuButton6</string>
                </property>
               </widget>
              </item>

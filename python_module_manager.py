@@ -82,7 +82,6 @@ class PythonModuleManager:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('PythonModuleManager', message)
 
-
     def add_action(
         self,
         icon_path,
@@ -179,7 +178,6 @@ class PythonModuleManager:
                 action)
             self.iface.removeToolBarIcon(action)
 
-
     def run(self):
         """Run method that performs all the real work"""
 
@@ -189,16 +187,15 @@ class PythonModuleManager:
             self.first_start = False
             self.dlg = PythonModuleManagerDialog()
             self.set_label_init()
-            #self.show_installed_packages_pkgresources()
-            self.show_all_distributions_importlib
+            self.show_all_packages()
             
             self.dlg.myPushButton1.setText("Install Package")
-            self.dlg.myPushButton1.setToolTip("Install packages in the text box above. You may have two or more packages in each line.")
+            self.dlg.myPushButton1.setToolTip("Install a package/packages in the text box above. You may have two or more packages in each line.")
             self.dlg.myPushButton1.clicked.connect(self.install_package)
             
             self.dlg.myPushButton2.setText("Show Modules")
             self.dlg.myPushButton2.setToolTip("Show all the modules in the selected package in the text box above.")
-            self.dlg.myPushButton2.clicked.connect(self.show_all_modules_importlib)
+            self.dlg.myPushButton2.clicked.connect(self.show_all_modules)
             
             self.dlg.myPushButton3.setText("Upgrade")
             self.dlg.myPushButton3.setToolTip("Upgrade the selected package. This requires the Internet access.")
@@ -210,7 +207,11 @@ class PythonModuleManager:
             
             self.dlg.myPushButton5.setText("Refresh")
             self.dlg.myPushButton5.setToolTip("Refresh the list of installed paackages.")
-            self.dlg.myPushButton5.clicked.connect(self.show_all_distributions_importlib)
+            self.dlg.myPushButton5.clicked.connect(self.show_all_packages)
+            
+            self.dlg.myPushButton6.setText("Test Module")
+            self.dlg.myPushButton6.setToolTip("Type a module name in the above field. Pu the button to import it.")
+            self.dlg.myPushButton6.clicked.connect(self.test_load_module)
 
         # show the dialog
         self.dlg.show()
@@ -222,6 +223,26 @@ class PythonModuleManager:
             # substitute with your code.
             pass
 
+    def show_all_packages(self):
+        bol_Failed = False
+        try:
+            self.show_all_distributions_importlib()
+        except Exception as e:
+            bol_Failed = True
+        
+        if bol_Failed:
+            self.show_installed_packages_pkgresources()
+
+    def show_all_modules(self):
+        bol_Failed = False
+        try:
+            self.show_all_modules_importlib()
+        except Exception as e:
+            bol_Failed = True
+        
+        if bol_Failed:
+            self.show_all_modules_pkgutil()
+    
     # https://discuss.python.org/t/will-setuptools-remove-pkg-resource-module-in-the-future/27182
     # https://github.com/matrix-org/synapse/issues/12508
     def show_installed_packages_pkgresources(self):
@@ -264,26 +285,61 @@ class PythonModuleManager:
         self.dlg.myTextEditLog.append(message)
 
     def install_package(self):
-        import pip
-        package_names = self.dlg.myTextEdit.toPlainText().split()
+        import sys
+        from io import StringIO
+        from pip._internal.cli.main import main as pip_main
+        original_stdout = sys.stdout
+        original_stderr = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
+        
+        package_names = self.dlg.myTextEdit.toPlainText()
+        package_names = package_names.replace(',', ' ')
+        package_names = package_names.split()
 
         for package_name in package_names:
             try:
-                pip.main(["install", module_name])
-                self.print_log(f"Successfully installed {package_name}")
-                self.show_installed_packages()
+                pip_main(['install', package_name])
+                result_stdout = sys.stdout.getvalue()
+                result_stderr = sys.stderr.getvalue()
+                if (result_stdout != ''):
+                    self.print_log(result_stdout)
+                if (result_stderr != ''):
+                    self.print_log(result_stderr)
+                self.show_all_distributions_importlib()
             except Exception as e:
                 self.print_log(f"Failed to install {package_name}. Error: {e}")
+            finally:
+                # Restore the original stdout and stderr
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
 
     def upgrade_package(self):
-        import pip
+        import sys
+        from io import StringIO
+        from pip._internal.cli.main import main as pip_main
+        original_stdout = sys.stdout
+        original_stderr = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
+        
         package = self.dlg.myListWidget.currentItem().text()
         package_name = package.split(" ")[0]
+        
         try:
-            pip.main(['install', '--upgrade', package_name])
-            self.print_log(f"Updated {package}.")
+            pip_main(['install', package_name])
+            result_stdout = sys.stdout.getvalue()
+            result_stderr = sys.stderr.getvalue()
+            if (result_stdout != ''):
+                self.print_log(result_stdout)
+            if (result_stderr != ''):
+                self.print_log(result_stderr)
         except Exception as e:
-            self.print_log(f"Error updating module: {e}")
+            self.print_log(f"Failed to install {package_name}. Error: {e}")
+        finally:
+            # Restore the original stdout and stderr
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
 
     def show_package_path(self):
         import importlib.util
@@ -312,17 +368,14 @@ class PythonModuleManager:
         package = self.dlg.myListWidget.currentItem().text()
         package_name = package.split(" ")[0]
         self.print_log(pkg_resources.get_distribution(package_name).location)
-        
-    def show_all_modules(self):
+
+    def show_all_modules_pkgutil(self):
         import importlib
         import pkgutil
         
         package = self.dlg.myListWidget.currentItem().text()
         package_name = package.split(" ")[0]
-        
-        
         package = importlib.import_module(package_name)
-        
         module_iterator = pkgutil.iter_modules(package.__path__)
         
         for _, module_name, _ in module_iterator:
@@ -339,7 +392,7 @@ class PythonModuleManager:
             for entry_point in entry_point.values():
                 if entry_point.module_name:
                     self.print_log(entry_point.module_name)
-    
+
     def show_all_distributions_importlib(self):
         from importlib.metadata import distributions
         distributions = distributions()
@@ -354,7 +407,6 @@ class PythonModuleManager:
         for package in installed_packages:
             self.dlg.myListWidget.addItem(package['name'] + ' ' + package['version'])
 
-    
     def show_all_modules_importlib(self):
         from importlib.metadata import files
         
@@ -377,7 +429,22 @@ class PythonModuleManager:
             response = requests.get(f'https://pypi.org/pypi/{package_name}/json')
             data = response.json()
             latest_version = data['info']['version']
-            self.print_log(f"The latest version of {package_name} is {latest_version}")
+            requires_python = data['info']['requires_python']
+            self.print_log(f"The latest version of {package_name} is {latest_version} and reuires python {requires_python}.")
         except Exception as e:
             self.print_log(f"Error fetching latest version for {package_name}: {e}")
 
+    def test_load_module(self):
+        import importlib
+        module_name = self.dlg.myLineEdit2.text().split()[0]
+        
+        try:
+            # Try to import the module dynamically
+            module = importlib.import_module(module_name)        
+            if hasattr(module, '__version__'):
+                version = module.__version__
+                self.print_log(f"Module '{module_name}' loaded successfully. Version: {version}")
+            else:
+                self.print_log(f"Module '{module_name}' loaded successfully. Version information not available.")
+        except ImportError as e:
+            self.print_log(f"Error loading module '{module_name}': {e}")
